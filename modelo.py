@@ -18,10 +18,14 @@ class Modelo:
   def execute(self):
     self.sample_data()
 
-    if self.params["preprocess?"] == True:
+    if self.params["preprocess?"]:
       self.preprocessing()
-    
-    self.fit_selectors()
+
+    if self.params["selectors?"]:
+      self.fit_selectors()
+    else:
+      self.fit_selectors(other_selectors=False)
+
     self.train_model()
     print("Processo Finalizado")
 
@@ -31,31 +35,40 @@ class Modelo:
       random_state=42, 
       shuffle=self.params["shuffle?"],
       train_size=self.params["train_size"]
-      )
+    )
 
   def preprocessing(self):
     pass
 
-  def fit_selectors(self):
-    self.selectors_used = ["PCA", "KPCA", "LDA"]
+  def fit_selectors(self, other_selectors: bool = True):
+    self.selectors_used = ["all"]
     self.__pca = PCA()
     self.__kpca = KernelPCA()
     self.__lda = LinearDiscriminantAnalysis()
 
     self.pre_samples = {
-      "PCA": {
-        "X_train": self.__pca.fit_transform(self.X_train),
-        "X_test": self.__pca.transform(self.X_test)
-      },
-      "KPCA": { 
-        "X_train": self.__kpca.fit_transform(self.X_train),
-        "X_test": self.__kpca.transform(self.X_test)
-      },
-      "LDA": {
-        "X_train": self.__lda.fit_transform(self.X_train, self.y_train),
-        "X_test": self.__lda.transform(self.X_test)
+      "all": {
+        "X_train": self.X_train,
+        "X_test": self.X_test,
       }
     }
+    
+    if other_selectors:
+      self.selectors_used += ["PCA", "KPCA", "LDA"]
+      self.pre_samples.update({
+        "PCA": {
+            "X_train": self.__pca.fit_transform(self.X_train),
+            "X_test": self.__pca.transform(self.X_test)
+          },
+          "KPCA": { 
+            "X_train": self.__kpca.fit_transform(self.X_train),
+            "X_test": self.__kpca.transform(self.X_test)
+          },
+          "LDA": {
+            "X_train": self.__lda.fit_transform(self.X_train, self.y_train),
+            "X_test": self.__lda.transform(self.X_test)
+          }
+        })
 
   def train_model(self):
     self.fitted_models, self.results = {}, {}
@@ -69,7 +82,7 @@ class Modelo:
         scoring=self.params["cv_scoring"]
         ).fit(
           X=self.pre_samples[selector]["X_train"],
-          y=self.pre_samples[selector]["y_train"]
+          y=self.y_train
           )
       self.fitted_models[selector] = fitted_model
       

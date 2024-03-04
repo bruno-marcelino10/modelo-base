@@ -2,20 +2,22 @@
 import pandas as pd
 import numpy as np
 
-from model import Modelo
+from modelo import Modelo
 
 # Dados
 dados = pd.read_csv("titanic.csv")
-dados.drop(["Name", "PassengerId","Ticket", "Cabin"], axis=1, inplace=True)
+#dados.drop(["Name", "PassengerId","Ticket", "Cabin"], axis=1, inplace=True)
+dados.drop(["Name", "PassengerId","Ticket", "Cabin", "Sex", "Embarked"], axis=1, inplace=True)
 train_data = dados.drop("Survived", axis=1)
 test_data = dados["Survived"]
 
 # Modelagem
-from model import Modelo
+from modelo import Modelo
 from sklearn.ensemble import RandomForestClassifier
 
 params = {
   "preprocess?": False, 
+  "selectors?": False, 
   "shuffle?": True,
   "train_size": 0.7,
   "n_folds": 2,
@@ -35,3 +37,5 @@ modelo = Modelo(
   test=test_data,
   **params
   )
+
+modelo.execute()
